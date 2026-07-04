@@ -1,0 +1,139 @@
+[
+  {
+    "_error_expected": "AmountConversionError — monto no numérico",
+    "id": "err_001",
+    "amount": "INVALID_AMOUNT",
+    "currency": "USD",
+    "timestamp": "2025-02-01 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "TransactionValidationError — monto negativo",
+    "id": "err_002",
+    "amount": "-99.99",
+    "currency": "USD",
+    "timestamp": "2025-02-02 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "CurrencyNormalizationError — código ISO no reconocido",
+    "id": "err_003",
+    "amount": "100.00",
+    "currency": "XYZ",
+    "timestamp": "2025-02-03 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "DateParsingError — formato de fecha completamente inválido",
+    "id": "err_004",
+    "amount": "50.00",
+    "currency": "USD",
+    "timestamp": "not-a-date",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "DateParsingError — orden de campos incorrecto (día/mes invertido con formato inesperado)",
+    "id": "err_005",
+    "amount": "50.00",
+    "currency": "USD",
+    "timestamp": "31-13-2025 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "StatusMappingError — estado no reconocido en rules.json",
+    "id": "err_006",
+    "amount": "200.00",
+    "currency": "EUR",
+    "timestamp": "2025-02-06 10:00:00",
+    "status": "unknown_state_xyz"
+  },
+  {
+    "_error_expected": "FieldMappingError — campo 'id' completamente ausente",
+    "amount": "150.00",
+    "currency": "USD",
+    "timestamp": "2025-02-07 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "FieldMappingError — campo 'amount' es null",
+    "id": "err_008",
+    "amount": null,
+    "currency": "USD",
+    "timestamp": "2025-02-08 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "CurrencyNormalizationError — Variante 2, código inexistente",
+    "transaction_id": 901,
+    "total": 5000,
+    "currency_code": "XXX",
+    "created_at": "09/02/2025 10:00",
+    "state": "OK"
+  },
+  {
+    "_error_expected": "DateParsingError — Variante 2, formato de fecha imposible",
+    "transaction_id": 902,
+    "total": 1000,
+    "currency_code": "usd",
+    "created_at": "2025/02/10",
+    "state": "OK"
+  },
+  {
+    "_error_expected": "AmountConversionError — Variante 2, total no es numérico",
+    "transaction_id": 903,
+    "total": "no_number",
+    "currency_code": "eur",
+    "created_at": "11/02/2025 10:00",
+    "state": "pending"
+  },
+  {
+    "_error_expected": "StatusMappingError — Variante 2, estado vacío",
+    "transaction_id": 904,
+    "total": 2500,
+    "currency_code": "usd",
+    "created_at": "12/02/2025 10:00",
+    "state": ""
+  },
+  {
+    "_error_expected": "CurrencyNormalizationError — Variante 3, símbolo de moneda no en symbol_map",
+    "ref": "E-001",
+    "amount": "₿0,05",
+    "date": "2025-02-13T10:00:00Z",
+    "result": "success"
+  },
+  {
+    "_error_expected": "DateParsingError — Variante 3, fecha ISO-8601 malformada",
+    "ref": "E-002",
+    "amount": "€20,00",
+    "date": "2025-13-40T99:99:99Z",
+    "result": "success"
+  },
+  {
+    "_error_expected": "FieldMappingError — Variante 3, campo 'ref' ausente",
+    "amount": "€15,00",
+    "date": "2025-02-15T10:00:00Z",
+    "result": "success"
+  },
+  {
+    "_error_expected": "VariantDetectionError — ninguna variante reconoce esta estructura",
+    "unknown_field_a": "value_a",
+    "unknown_field_b": 123,
+    "unknown_field_c": true
+  },
+  {
+    "_error_expected": "TransactionValidationError — monto cero (allow_zero=false en rules.json)",
+    "id": "err_017",
+    "amount": "0.00",
+    "currency": "USD",
+    "timestamp": "2025-02-17 10:00:00",
+    "status": "completed"
+  },
+  {
+    "_error_expected": "FieldMappingError — Variante 2, transaction_id nulo",
+    "transaction_id": null,
+    "total": 5000,
+    "currency_code": "usd",
+    "created_at": "18/02/2025 10:00",
+    "state": "OK"
+  }
+]

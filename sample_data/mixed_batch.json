@@ -1,0 +1,92 @@
+[
+  {
+    "_note": "VÁLIDO — Variante 1",
+    "id": "mix_001",
+    "amount": "500.00",
+    "currency": "USD",
+    "timestamp": "2025-03-01 09:00:00",
+    "status": "completed"
+  },
+  {
+    "_note": "INVÁLIDO — monto negativo",
+    "id": "mix_002",
+    "amount": "-10.00",
+    "currency": "EUR",
+    "timestamp": "2025-03-01 09:05:00",
+    "status": "success"
+  },
+  {
+    "_note": "VÁLIDO — Variante 2",
+    "transaction_id": 401,
+    "total": 32000,
+    "currency_code": "eur",
+    "created_at": "01/03/2025 09:10",
+    "state": "OK"
+  },
+  {
+    "_note": "INVÁLIDO — moneda no soportada",
+    "transaction_id": 402,
+    "total": 500,
+    "currency_code": "abc",
+    "created_at": "01/03/2025 09:15",
+    "state": "pending"
+  },
+  {
+    "_note": "VÁLIDO — Variante 3",
+    "ref": "MIX-001",
+    "amount": "€75,00",
+    "date": "2025-03-01T09:20:00Z",
+    "result": "success"
+  },
+  {
+    "_note": "INVÁLIDO — fecha imposible en Variante 3",
+    "ref": "MIX-002",
+    "amount": "£30,00",
+    "date": "not-a-date-at-all",
+    "result": "pending"
+  },
+  {
+    "_note": "VÁLIDO — Variante 1, estado 'approved' del config extendido",
+    "id": "mix_003",
+    "amount": "1200.00",
+    "currency": "GBP",
+    "timestamp": "2025-03-01 10:00:00",
+    "status": "approved"
+  },
+  {
+    "_note": "INVÁLIDO — estado completamente inventado",
+    "id": "mix_004",
+    "amount": "80.00",
+    "currency": "USD",
+    "timestamp": "2025-03-01 10:05:00",
+    "status": "zapping"
+  },
+  {
+    "_note": "VÁLIDO — Variante 2, BRL",
+    "transaction_id": 403,
+    "total": 9999,
+    "currency_code": "brl",
+    "created_at": "01/03/2025 10:10",
+    "state": "processing"
+  },
+  {
+    "_note": "INVÁLIDO — estructura desconocida",
+    "payments_ref": "PAY-9901",
+    "gross": 1000,
+    "iso_currency": "USD"
+  },
+  {
+    "_note": "VÁLIDO — Variante 3, JPY símbolo ¥",
+    "ref": "MIX-003",
+    "amount": "¥1500,00",
+    "date": "2025-03-01T11:00:00Z",
+    "result": "done"
+  },
+  {
+    "_note": "INVÁLIDO — campo 'amount' ausente en Variante 1",
+    "id": "mix_005",
+    "currency": "USD",
+    "timestamp": "2025-03-01 11:15:00",
+    "status": "completed"
+  }
+]

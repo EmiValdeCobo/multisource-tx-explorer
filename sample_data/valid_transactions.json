@@ -1,0 +1,118 @@
+[
+  {
+    "_comment": "Variante 1 — USD, estado en minúscula 'completed'",
+    "id": "tx_v1_001",
+    "amount": "250.00",
+    "currency": "USD",
+    "timestamp": "2025-01-10 08:30:00",
+    "status": "completed"
+  },
+  {
+    "_comment": "Variante 1 — EUR, estado 'success'",
+    "id": "tx_v1_002",
+    "amount": "1099.99",
+    "currency": "EUR",
+    "timestamp": "2025-01-11 14:15:00",
+    "status": "success"
+  },
+  {
+    "_comment": "Variante 1 — GBP, estado 'pending'",
+    "id": "tx_v1_003",
+    "amount": "75.50",
+    "currency": "GBP",
+    "timestamp": "2025-01-12 09:00:00",
+    "status": "pending"
+  },
+  {
+    "_comment": "Variante 1 — estado 'failed' explícito",
+    "id": "tx_v1_004",
+    "amount": "320.00",
+    "currency": "USD",
+    "timestamp": "2025-01-13 16:45:00",
+    "status": "failed"
+  },
+  {
+    "_comment": "Variante 1 — monto con decimales extendidos",
+    "id": "tx_v1_005",
+    "amount": "9999.99",
+    "currency": "CAD",
+    "timestamp": "2025-01-14 11:00:00",
+    "status": "succeeded"
+  },
+  {
+    "_comment": "Variante 2 — USD en centavos, estado 'OK'",
+    "transaction_id": 301,
+    "total": 25000,
+    "currency_code": "usd",
+    "created_at": "10/01/2025 08:30",
+    "state": "OK"
+  },
+  {
+    "_comment": "Variante 2 — EUR, estado 'pending'",
+    "transaction_id": 302,
+    "total": 109999,
+    "currency_code": "eur",
+    "created_at": "11/01/2025 14:15",
+    "state": "pending"
+  },
+  {
+    "_comment": "Variante 2 — GBP, estado 'failed'",
+    "transaction_id": 303,
+    "total": 7550,
+    "currency_code": "gbp",
+    "created_at": "12/01/2025 09:00",
+    "state": "failed"
+  },
+  {
+    "_comment": "Variante 2 — MXN, estado 'processing'",
+    "transaction_id": 304,
+    "total": 150000,
+    "currency_code": "mxn",
+    "created_at": "13/01/2025 20:10",
+    "state": "processing"
+  },
+  {
+    "_comment": "Variante 3 — EUR con símbolo, ISO-8601 con Z",
+    "ref": "B-001",
+    "amount": "€150,00",
+    "date": "2025-01-10T08:30:00Z",
+    "result": "success"
+  },
+  {
+    "_comment": "Variante 3 — GBP con símbolo £",
+    "ref": "B-002",
+    "amount": "£299,99",
+    "date": "2025-01-11T14:15:00Z",
+    "result": "pending"
+  },
+  {
+    "_comment": "Variante 3 — USD con símbolo $",
+    "ref": "B-003",
+    "amount": "$499,50",
+    "date": "2025-01-12T09:00:00Z",
+    "result": "failed"
+  },
+  {
+    "_comment": "Variante 3 — EUR monto pequeño",
+    "ref": "B-004",
+    "amount": "€1,99",
+    "date": "2025-01-13T23:59:59Z",
+    "result": "completed"
+  },
+  {
+    "_comment": "Variante 1 — estado 'approved' (nuevo en rules.json)",
+    "id": "tx_v1_006",
+    "amount": "500.00",
+    "currency": "CHF",
+    "timestamp": "2025-01-15 12:00:00",
+    "status": "approved"
+  },
+  {
+    "_comment": "Variante 2 — BRL, estado 'queued' (en rules.json)",
+    "transaction_id": 305,
+    "total": 89999,
+    "currency_code": "brl",
+    "created_at": "15/01/2025 08:00",
+    "state": "queued"
+  }
+]
