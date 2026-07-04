@@ -1,0 +1,67 @@
+{% extends "transactions/base.html" %}
+{% block title %}Errores de validación – Normalizer{% endblock %}
+{% block content %}
+<h1>Registros inválidos</h1>
+
+<div class="card">
+  <form class="filters" method="get">
+    <label>ejecuccion
+      <select name="run">
+        <option value="">Todas</option>
+        {% for run in runs %}
+        <option value="{{ run.pk }}" {% if selected_run == run.pk|stringformat:"s" %}selected{% endif %}>#{{ run.pk }} – {{ run.created_at|date:"Y-m-d H:i" }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tipo de error
+      <select name="error_type">
+        <option value="">Todos</option>
+        {% for et in error_types %}
+        <option value="{{ et }}" {% if et == selected_error_type %}selected{% endif %}>{{ et }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary" style="align-self:flex-end">Filtrar</button>
+    <a href="{% url 'error_list' %}" class="btn btn-secondary" style="align-self:flex-end">Limpiar</a>
+  </form>
+</div>
+
+{% if page_obj.object_list %}
+{% for err in page_obj %}
+<div class="card" style="margin-bottom:14px">
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <span class="badge badge-failed">{{ err.error_type }}</span>
+    <span class="pill">Campo: <strong>{{ err.field|default:"—" }}</strong></span>
+    <span class="pill">Valor: <code>{{ err.value|default:"—" }}</code></span>
+    <span class="pill">Fuente: {{ err.source }}</span>
+    <span class="pill" style="margin-left:auto;color:var(--muted)">ejecuccion #{{ err.run.pk }} · {{ err.created_at|date:"Y-m-d H:i:s" }}</span>
+  </div>
+  <div class="error-reason">{{ err.reason }}</div>
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer;color:var(--muted);font-size:12px;user-select:none">Ver registro crudo</summary>
+    <pre style="margin-top:10px">{{ err.raw_record }}</pre>
+  </details>
+</div>
+{% endfor %}
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page=1">«</a>
+    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.previous_page_number }}">‹</a>
+  {% endif %}
+  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.next_page_number }}">›</a>
+    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.paginator.num_pages }}">»</a>
+  {% endif %}
+  <span style="color:var(--muted);margin-left:8px;font-size:12px">{{ page_obj.paginator.count }} errores totales</span>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card empty">
+  <p>✓ Sin errores con los filtros seleccionados.</p>
+</div>
+{% endif %}
+{% endblock %}

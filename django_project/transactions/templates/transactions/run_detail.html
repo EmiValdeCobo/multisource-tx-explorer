@@ -1,0 +1,135 @@
+{% extends "transactions/base.html" %}
+{% block title %}ejecuccion #{{ run.pk }} – Normalizer{% endblock %}
+{% block content %}
+
+<div class="breadcrumb" style="margin-bottom:14px">
+  <a href="{% url 'run_list' %}">← Historial</a>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+  <div>
+    <h1 style="margin-bottom:4px">ejecuccion #{{ run.pk }}</h1>
+    <p style="color:var(--muted);font-size:12px;margin:0">
+      Fuente: <span class="mono">{{ run.source_label }}</span>
+      &nbsp;·&nbsp; {{ run.created_at|date:"Y-m-d H:i:s" }} UTC
+    </p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{% url 'run_download_json' run.pk %}" class="btn btn-secondary">↓ JSON</a>
+    <a href="{% url 'run_download_csv' run.pk %}" class="btn btn-secondary">↓ CSV</a>
+    <form method="post" action="{% url 'run_delete' run.pk %}"
+          onsubmit="return confirm('¿Eliminar ejecuccion #{{ run.pk }} y todos sus datos?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Eliminar ejecuccion</button>
+    </form>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid" style="margin-bottom:22px">
+  <div class="stat"><div class="stat-label">Total procesados</div><div class="stat-value">{{ run.total_processed }}</div></div>
+  <div class="stat"><div class="stat-label">Válidos</div><div class="stat-value accent">{{ run.total_valid }}</div></div>
+  <div class="stat"><div class="stat-label">Inválidos</div><div class="stat-value danger">{{ run.total_invalid }}</div></div>
+  <div class="stat"><div class="stat-label">SUCCESS</div><div class="stat-value" style="color:var(--success)">{{ run.status_counts.SUCCESS|default:0 }}</div></div>
+  <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" style="color:var(--pending)">{{ run.status_counts.PENDING|default:0 }}</div></div>
+  <div class="stat"><div class="stat-label">FAILED</div><div class="stat-value" style="color:var(--failed)">{{ run.status_counts.FAILED|default:0 }}</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px">
+  <div class="card">
+    <h2>Totales por moneda</h2>
+    <table>
+      <thead><tr><th>Moneda</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>
+        {% for curr, total in run.currency_totals.items %}
+        <tr>
+          <td><span class="badge badge-v2">{{ curr }}</span></td>
+          <td style="text-align:right;font-weight:700;font-family:monospace">{{ total }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="2" class="empty">Sin datos</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Errores por tipo</h2>
+    <table>
+      <thead><tr><th>Tipo</th><th style="text-align:right">Cantidad</th></tr></thead>
+      <tbody>
+        {% for etype, cnt in run.error_type_counts.items %}
+        <tr>
+          <td><span class="mono" style="color:var(--danger)">{{ etype }}</span></td>
+          <td style="text-align:right">{{ cnt }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="2" style="color:var(--success);padding:14px">✓ Sin errores</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Transactions -->
+<h2 style="margin-bottom:12px">Transacciones normalizadas</h2>
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:24px">
+  {% if page_obj.object_list %}
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Monto</th><th>Moneda</th><th>Timestamp</th><th>Estado</th><th>Fuente</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for tx in page_obj %}
+      <tr>
+        <td class="mono">{{ tx.external_id }}</td>
+        <td class="mono" style="text-align:right">{{ tx.amount }}</td>
+        <td><span class="badge badge-v2">{{ tx.currency }}</span></td>
+        <td class="mono">{{ tx.timestamp|date:"Y-m-d H:i:s" }}Z</td>
+        <td>
+          {% if tx.status == "SUCCESS" %}<span class="badge badge-success">SUCCESS</span>
+          {% elif tx.status == "FAILED" %}<span class="badge badge-failed">FAILED</span>
+          {% else %}<span class="badge badge-pending">PENDING</span>{% endif %}
+        </td>
+        <td>
+          {% if tx.source == "variant_1" %}<span class="badge badge-v1">{{ tx.source }}</span>
+          {% elif tx.source == "variant_2" %}<span class="badge badge-v2">{{ tx.source }}</span>
+          {% else %}<span class="badge badge-v3">{{ tx.source }}</span>{% endif %}
+        </td>
+        <td><a href="{% url 'transaction_detail' tx.pk %}">Ver →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>Sin transacciones válidas en esta ejecuccion.</p></div>
+  {% endif %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination" style="margin-bottom:24px">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">‹</a>{% endif %}
+  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">›</a>{% endif %}
+  <span style="color:var(--muted);margin-left:8px;font-size:12px">{{ page_obj.paginator.count }} transacciones</span>
+</div>
+{% endif %}
+
+<!-- Errors -->
+{% if errors %}
+<h2 style="margin-bottom:12px">Registros inválidos <span class="pill">{{ errors.count }}</span></h2>
+{% for err in errors %}
+<div class="card" style="margin-bottom:12px">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <span class="badge badge-failed">{{ err.error_type }}</span>
+    <span class="pill">Campo: <strong>{{ err.field|default:"—" }}</strong></span>
+    <span class="pill">Valor: <code>{{ err.value|default:"—" }}</code></span>
+    <span class="pill">Fuente: {{ err.source }}</span>
+  </div>
+  <div class="error-reason">{{ err.reason }}</div>
+  <details style="margin-top:10px">
+    <summary style="cursor:pointer;color:var(--muted);font-size:12px;user-select:none">Ver registro crudo</summary>
+    <pre style="margin-top:8px">{{ err.raw_record }}</pre>
+  </details>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

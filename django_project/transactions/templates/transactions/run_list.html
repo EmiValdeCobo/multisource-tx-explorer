@@ -1,0 +1,66 @@
+{% extends "transactions/base.html" %}
+{% block title %}Historial de ejecuccions – Normalizer{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+  <h1 style="margin-bottom:0">Historial de ejecuccions</h1>
+  <a href="{% url 'upload_json' %}" class="btn btn-primary">+ Nueva importación</a>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if page_obj.object_list %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Fuente / Etiqueta</th><th>Fecha</th>
+        <th style="text-align:center">Procesados</th>
+        <th style="text-align:center">Válidos</th>
+        <th style="text-align:center">Inválidos</th>
+        <th>Monedas</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in page_obj %}
+      <tr>
+        <td class="mono" style="color:var(--muted)">#{{ run.pk }}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          <a href="{% url 'run_detail' run.pk %}">{{ run.source_label }}</a>
+        </td>
+        <td class="mono" style="white-space:nowrap">{{ run.created_at|date:"Y-m-d H:i" }}</td>
+        <td style="text-align:center">{{ run.total_processed }}</td>
+        <td style="text-align:center;color:var(--success);font-weight:700">{{ run.total_valid }}</td>
+        <td style="text-align:center;color:{% if run.total_invalid %}var(--danger){% else %}var(--muted){% endif %}">{{ run.total_invalid }}</td>
+        <td style="font-size:12px">
+          {% for curr, total in run.currency_totals.items %}
+            <span class="badge badge-v2" style="margin-right:3px">{{ curr }} {{ total }}</span>
+          {% endfor %}
+        </td>
+        <td style="white-space:nowrap">
+          <a href="{% url 'run_detail' run.pk %}" class="btn btn-secondary" style="padding:4px 10px;font-size:12px">Ver</a>
+          <a href="{% url 'run_download_json' run.pk %}" class="btn btn-secondary" style="padding:4px 10px;font-size:12px">↓ JSON</a>
+          <a href="{% url 'run_download_csv' run.pk %}" class="btn btn-secondary" style="padding:4px 10px;font-size:12px">↓ CSV</a>
+          <form method="post" action="{% url 'run_delete' run.pk %}" style="display:inline"
+                onsubmit="return confirm('¿Eliminar ejecuccion #{{ run.pk }} y todos sus datos?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" style="padding:4px 10px;font-size:12px">Borrar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p style="margin-bottom:14px">Aún no hay ejecuccions. Importa tu primer archivo.</p>
+    <a href="{% url 'upload_json' %}" class="btn btn-primary">+ Importar JSON</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">‹</a>{% endif %}
+  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">›</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "transactions/base.html" %}
+{% block title %}Dashboard – Normalizer{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+{% if latest_run %}
+  <p style="color:var(--muted);font-size:12px;margin-bottom:20px;">
+    Última ejecuccion: <strong style="color:var(--text)">{{ latest_run.created_at|date:"Y-m-d H:i:s" }} UTC</strong>
+    — Fuente: <span class="mono">{{ latest_run.source_label }}</span>
+  </p>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-label">Total procesados</div><div class="stat-value">{{ latest_run.total_processed }}</div></div>
+    <div class="stat"><div class="stat-label">Válidos</div><div class="stat-value accent">{{ latest_run.total_valid }}</div></div>
+    <div class="stat"><div class="stat-label">Inválidos</div><div class="stat-value danger">{{ latest_run.total_invalid }}</div></div>
+    <div class="stat"><div class="stat-label">SUCCESS</div><div class="stat-value" style="color:var(--success)">{{ latest_run.status_counts.SUCCESS|default:0 }}</div></div>
+    <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" style="color:var(--pending)">{{ latest_run.status_counts.PENDING|default:0 }}</div></div>
+    <div class="stat"><div class="stat-label">FAILED</div><div class="stat-value" style="color:var(--failed)">{{ latest_run.status_counts.FAILED|default:0 }}</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;">
+
+    <div class="card">
+      <h2>Totales por moneda</h2>
+      <table>
+        <thead><tr><th>Moneda</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>
+          {% for currency, total in latest_run.currency_totals.items %}
+          <tr>
+            <td><span class="badge badge-v2">{{ currency }}</span></td>
+            <td style="text-align:right;font-weight:700;font-family:monospace">{{ total }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="2" class="empty">Sin datos</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Errores por tipo</h2>
+      <table>
+        <thead><tr><th>Tipo de error</th><th style="text-align:right">Ocurrencias</th></tr></thead>
+        <tbody>
+          {% for etype, count in latest_run.error_type_counts.items %}
+          <tr>
+            <td><span class="mono" style="color:var(--danger)">{{ etype }}</span></td>
+            <td style="text-align:right">{{ count }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="2" style="color:var(--success);padding:14px">✓ Sin errores</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Transacciones por fuente</h2>
+      <table>
+        <thead><tr><th>Fuente</th><th style="text-align:right">Transacciones</th></tr></thead>
+        <tbody>
+          {% for src, count in latest_run.source_counts.items %}
+          <tr>
+            <td>
+              {% if src == "variant_1" %}<span class="badge badge-v1">{{ src }}</span>
+              {% elif src == "variant_2" %}<span class="badge badge-v2">{{ src }}</span>
+              {% else %}<span class="badge badge-v3">{{ src }}</span>{% endif %}
+            </td>
+            <td style="text-align:right">{{ count }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="2" class="empty">Sin datos</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>ejecuccions recientes</h2>
+      <table>
+        <thead><tr><th>#</th><th>Fecha</th><th>Procesados</th><th>Válidos</th><th>Inválidos</th></tr></thead>
+        <tbody>
+          {% for run in runs %}
+          <tr>
+            <td class="mono">{{ run.pk }}</td>
+            <td class="mono">{{ run.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ run.total_processed }}</td>
+            <td style="color:var(--success)">{{ run.total_valid }}</td>
+            <td style="color:{% if run.total_invalid %}var(--danger){% else %}var(--muted){% endif %}">{{ run.total_invalid }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="dl-row">
+    <a href="{% url 'transaction_list' %}" class="btn btn-primary">Ver transacciones →</a>
+    <a href="{% url 'error_list' %}" class="btn btn-danger">Ver errores →</a>
+    <a href="{% url 'download_json' %}" class="btn btn-secondary">↓ Descargar JSON</a>
+    <a href="{% url 'download_csv' %}" class="btn btn-secondary">↓ Descargar CSV</a>
+  </div>
+
+{% else %}
+  <div class="card empty">
+    <p style="font-size:18px;margin-bottom:10px">Sin datos cargados aún.</p>
+    <p>Ejecuta el management command para importar transacciones:</p>
+    <pre style="display:inline-block;margin-top:12px;text-align:left">cd django_project
+python manage.py load_transactions</pre>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends "transactions/base.html" %}
+{% block title %}Importar JSON – Normalizer{% endblock %}
+{% block content %}
+
+<h1>Importar archivo de transacciones</h1>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }}" style="
+      padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:13px;
+      background:{% if 'error' in msg.tags %}rgba(255,77,109,.12){% else %}rgba(6,214,160,.12){% endif %};
+      border:1px solid {% if 'error' in msg.tags %}rgba(255,77,109,.4){% else %}rgba(6,214,160,.4){% endif %};
+      color:{% if 'error' in msg.tags %}var(--danger){% else %}var(--success){% endif %};">
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start">
+
+  <!-- Upload card -->
+  <div class="card">
+    <h2 style="margin-bottom:6px">Subir archivo JSON</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:20px">
+      El archivo debe ser una lista JSON <code>[ ]</code> con registros heterogéneos.
+      Máximo 10 MB. La normalización ocurre al instante tras subir.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" id="upload-form">
+      {% csrf_token %}
+
+      <!-- Drop zone -->
+      <div id="drop-zone" onclick="document.getElementById('json_file').click()" style="
+        border:2px dashed var(--border); border-radius:10px; padding:50px 24px;
+        text-align:center; cursor:pointer; transition:.2s; margin-bottom:18px;
+        background:var(--surface2);">
+        <div id="dz-icon" style="font-size:38px;margin-bottom:10px">📂</div>
+        <div id="dz-label" style="font-size:14px;color:var(--muted)">
+          Arrastra tu <strong style="color:var(--text)">.json</strong> aquí
+          o <span style="color:var(--accent)">haz clic para seleccionar</span>
+        </div>
+        <input type="file" name="json_file" id="json_file" accept=".json"
+               style="display:none" required>
+      </div>
+
+      <!-- Preview box (hidden until file chosen) -->
+      <div id="preview-box" style="display:none;margin-bottom:18px">
+        <div class="card" style="padding:14px 16px;margin-bottom:0">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span id="preview-icon" style="font-size:24px">📄</span>
+            <div style="flex:1;min-width:0">
+              <div id="preview-name" style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+              <div id="preview-size" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+            </div>
+            <div id="preview-count" style="text-align:right;font-size:13px"></div>
+          </div>
+          <div id="preview-error" style="color:var(--danger);font-size:12px;margin-top:10px;display:none"></div>
+          <div id="preview-sample" style="margin-top:12px;display:none">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Primeros 3 registros detectados</div>
+            <pre id="preview-pre" style="max-height:180px;overflow-y:auto;font-size:11px"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Label optativo -->
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px">
+        Etiqueta de la ejecuccion (opcional)
+        <input type="text" name="source_label" id="source_label"
+               placeholder="ej. batch-marzo-2025, sistema-pagos-v2..."
+               style="background:var(--surface2);border:1px solid var(--border);color:var(--text);
+                      padding:8px 12px;border-radius:6px;font-size:13px;outline:none;max-width:100%">
+      </label>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" disabled>
+        <span id="btn-label">Selecciona un archivo primero</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Side panel: info + formato -->
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <h2>Variantes soportadas</h2>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:14px">
+        El sistema detecta automáticamente la estructura de cada registro.
+      </p>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="badge badge-v1">Variante 1</span>
+        </div>
+        <pre style="font-size:11px;margin:0">{ "id", "amount"(str),
+  "currency", "timestamp",
+  "status" }</pre>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="badge badge-v2">Variante 2</span>
+        </div>
+        <pre style="font-size:11px;margin:0">{ "transaction_id", "total"(cents),
+  "currency_code", "created_at",
+  "state" }</pre>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="badge badge-v3">Variante 3</span>
+        </div>
+        <pre style="font-size:11px;margin:0">{ "ref", "amount"("€99,99"),
+  "date"(ISO-8601), "result" }</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ejecuccions recientes</h2>
+      {% for run in recent_runs %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <a href="{% url 'run_detail' run.pk %}" style="font-size:13px;font-weight:600">ejecuccion #{{ run.pk }}</a>
+          <div style="font-size:11px;color:var(--muted)">{{ run.source_label }}</div>
+        </div>
+        <div style="text-align:right;font-size:12px">
+          <span style="color:var(--success)">{{ run.total_valid }}✓</span>
+          <span style="color:var(--danger);margin-left:6px">{{ run.total_invalid }}✗</span>
+        </div>
+      </div>
+      {% empty %}
+      <p style="color:var(--muted);font-size:13px">Sin ejecuccions previas.</p>
+      {% endfor %}
+      {% if recent_runs %}
+      <a href="{% url 'run_list' %}" style="display:block;text-align:center;margin-top:12px;font-size:12px">Ver historial completo →</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+const dropZone  = document.getElementById("drop-zone");
+const fileInput = document.getElementById("json_file");
+const preview   = document.getElementById("preview-box");
+const previewName  = document.getElementById("preview-name");
+const previewSize  = document.getElementById("preview-size");
+const previewCount = document.getElementById("preview-count");
+const previewErr   = document.getElementById("preview-error");
+const previewSample= document.getElementById("preview-sample");
+const previewPre   = document.getElementById("preview-pre");
+const submitBtn    = document.getElementById("submit-btn");
+const btnLabel     = document.getElementById("btn-label");
+const dzLabel      = document.getElementById("dz-label");
+const dzIcon       = document.getElementById("dz-icon");
+const sourceLbl    = document.getElementById("source_label");
+
+function fmtBytes(b) {
+  if (b < 1024) return b + " B";
+  if (b < 1024*1024) return (b/1024).toFixed(1) + " KB";
+  return (b/1024/1024).toFixed(2) + " MB";
+}
+
+function showPreview(file) {
+  preview.style.display = "block";
+  previewName.textContent = file.name;
+  previewSize.textContent = fmtBytes(file.size);
+  previewErr.style.display = "none";
+  previewSample.style.display = "none";
+  previewCount.innerHTML = "";
+  submitBtn.disabled = true;
+  btnLabel.textContent = "Validando…";
+
+  if (file.size > 10 * 1024 * 1024) {
+    previewErr.textContent = "El archivo supera el límite de 10 MB.";
+    previewErr.style.display = "block";
+    btnLabel.textContent = "Archivo demasiado grande";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    let parsed;
+    try {
+      parsed = JSON.parse(e.target.result);
+    } catch(err) {
+      previewErr.textContent = "JSON inválido: " + err.message;
+      previewErr.style.display = "block";
+      btnLabel.textContent = "JSON inválido";
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      previewErr.textContent = "El JSON debe ser una lista [ ] en el nivel raíz.";
+      previewErr.style.display = "block";
+      btnLabel.textContent = "Formato incorrecto";
+      return;
+    }
+    if (parsed.length === 0) {
+      previewErr.textContent = "La lista está vacía.";
+      previewErr.style.display = "block";
+      btnLabel.textContent = "Archivo vacío";
+      return;
+    }
+    // All good
+    previewCount.innerHTML = `<span style="font-size:22px;font-weight:700;color:var(--accent2)">${parsed.length}</span><br><span style="font-size:11px;color:var(--muted)">registros</span>`;
+    const sample = parsed.slice(0, 3);
+    previewPre.textContent = JSON.stringify(sample, null, 2);
+    previewSample.style.display = "block";
+    submitBtn.disabled = false;
+    btnLabel.textContent = `⚡ Normalizar ${parsed.length} registro${parsed.length !== 1 ? "s" : ""}`;
+    // Auto-fill label if empty
+    if (!sourceLbl.value) sourceLbl.value = file.name;
+  };
+  reader.readAsText(file);
+}
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0]) showPreview(fileInput.files[0]);
+});
+
+// Drag & drop
+["dragenter","dragover"].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; })
+);
+["dragleave","drop"].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.style.borderColor = "var(--border)"; })
+);
+dropZone.addEventListener("drop", e => {
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer(); dt.items.add(file);
+    fileInput.files = dt.files;
+    showPreview(file);
+  }
+});
+
+// Spinner on submit
+document.getElementById("upload-form").addEventListener("submit", () => {
+  submitBtn.disabled = true;
+  btnLabel.textContent = "Procesando…";
+});
+</script>
+{% endblock %}

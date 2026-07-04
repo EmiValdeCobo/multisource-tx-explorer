@@ -1,0 +1,36 @@
+{% extends "transactions/base.html" %}
+{% block title %}TX {{ tx.external_id }} – Normalizer{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'transaction_list' %}">← Transacciones</a>
+</div>
+<h1>Transacción: <span class="mono">{{ tx.external_id }}</span></h1>
+
+<div class="card">
+  <table style="max-width:600px">
+    <tr><th>Campo canónico</th><th>Valor</th></tr>
+    <tr><td><span class="mono">id</span></td><td class="mono">{{ tx.external_id }}</td></tr>
+    <tr><td><span class="mono">amount</span></td><td class="mono">{{ tx.amount }}</td></tr>
+    <tr><td><span class="mono">currency</span></td><td><span class="badge badge-v2">{{ tx.currency }}</span></td></tr>
+    <tr><td><span class="mono">timestamp</span></td><td class="mono">{{ tx.timestamp|date:"Y-m-d H:i:s" }}Z</td></tr>
+    <tr><td><span class="mono">status</span></td>
+        <td>
+          {% if tx.status == "SUCCESS" %}<span class="badge badge-success">SUCCESS</span>
+          {% elif tx.status == "FAILED" %}<span class="badge badge-failed">FAILED</span>
+          {% else %}<span class="badge badge-pending">PENDING</span>{% endif %}
+        </td>
+    </tr>
+    <tr><td><span class="mono">source</span></td>
+        <td>
+          {% if tx.source == "variant_1" %}<span class="badge badge-v1">{{ tx.source }}</span>
+          {% elif tx.source == "variant_2" %}<span class="badge badge-v2">{{ tx.source }}</span>
+          {% else %}<span class="badge badge-v3">{{ tx.source }}</span>{% endif %}
+        </td>
+    </tr>
+    <tr><td>ejecuccion #</td><td class="mono">{{ tx.run.pk }}</td></tr>
+    <tr><td>ejecuccion fecha</td><td class="mono">{{ tx.run.created_at|date:"Y-m-d H:i:s" }}Z</td></tr>
+  </table>
+</div>
+
+<a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Volver al listado</a>
+{% endblock %}

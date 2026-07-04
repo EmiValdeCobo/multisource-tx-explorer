@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Transaction Normalizer{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d2e; --surface2: #242840;
+      --border: #2e3250; --accent: #6c63ff; --accent2: #00d4aa;
+      --danger: #ff4d6d; --warn: #ffd166; --success: #06d6a0;
+      --pending: #ffd166; --failed: #ff4d6d;
+      --text: #e0e4f5; --muted: #7b82a8; --code: #c3c9e9;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+    a { color: var(--accent); text-decoration: none; } a:hover { opacity:.8; }
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:0; padding:0 24px; height:54px; }
+    .nav-brand { font-size:16px; font-weight:700; color:var(--accent); margin-right:32px; white-space:nowrap; }
+    .nav-links { display:flex; gap:4px; flex:1; flex-wrap:wrap; align-items:center; }
+    .nav-links a { color:var(--muted); padding:6px 12px; border-radius:6px; font-size:13px; transition:.15s; }
+    .nav-links a:hover,.nav-links a.active { background:var(--surface2); color:var(--text); }
+    .nav-upload { margin-left:auto; background:var(--accent); color:#fff !important; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:600; }
+    .nav-upload:hover { opacity:.85; }
+    .container { max-width:1200px; margin:0 auto; padding:28px 20px; }
+    h1 { font-size:22px; margin-bottom:20px; color:var(--text); }
+    h2 { font-size:16px; margin-bottom:14px; color:var(--text); }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:20px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px; }
+    .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+    .stat-value { font-size:28px; font-weight:700; color:var(--text); }
+    .stat-value.accent { color:var(--accent2); }
+    .stat-value.danger { color:var(--danger); }
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+    tr:last-child td { border-bottom:0; }
+    tr:hover td { background: var(--surface2); }
+    .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; letter-spacing:.04em; }
+    .badge-success { background:rgba(6,214,160,.15); color:var(--success); }
+    .badge-failed  { background:rgba(255,77,109,.15); color:var(--failed); }
+    .badge-pending { background:rgba(255,209,102,.15); color:var(--pending); }
+    .badge-v1 { background:rgba(108,99,255,.15); color:#a59fff; }
+    .badge-v2 { background:rgba(0,212,170,.15); color:#00d4aa; }
+    .badge-v3 { background:rgba(255,150,100,.15); color:#ff9664; }
+    form.filters { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; align-items:flex-end; }
+    form.filters label { display:flex; flex-direction:column; gap:5px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    form.filters input, form.filters select { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:7px 11px; border-radius:6px; font-size:13px; min-width:120px; outline:none; }
+    form.filters input:focus, form.filters select:focus { border-color:var(--accent); }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:6px; border:none; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; text-decoration:none; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { opacity:.85; }
+    .btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-danger { background:rgba(255,77,109,.15); color:var(--danger); border:1px solid rgba(255,77,109,.3); }
+    .btn-danger:hover { background:rgba(255,77,109,.25); }
+    .pagination { display:flex; gap:6px; align-items:center; margin-top:18px; flex-wrap:wrap; }
+    .pagination a,.pagination span { padding:5px 12px; border-radius:6px; border:1px solid var(--border); font-size:13px; }
+    .pagination .current { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .pagination a:hover { border-color:var(--accent); color:var(--accent); }
+    .mono { font-family:monospace; font-size:12px; color:var(--code); }
+    .error-reason { background:var(--surface2); border-left:3px solid var(--danger); padding:10px 14px; border-radius:0 6px 6px 0; font-size:12px; color:var(--muted); }
+    pre { background:var(--surface2); padding:14px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.6; border:1px solid var(--border); }
+    .dl-row { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .empty { text-align:center; padding:50px 20px; color:var(--muted); }
+    .pill { display:inline-block; psadding:2px 8px; border-radius:12px; font-size:11px; background:var(--surface2); color:var(--muted); }
+    .breadcrumb { font-size:12px; color:var(--muted); margin-bottom:16px; }
+    .breadcrumb a { color:var(--muted); } .breadcrumb a:hover { color:var(--text); }
+    .alert { padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:13px; }
+  </style>
+</head>
+<body>
+<nav>
+  <span class="nav-brand"> Normalizer</span>
+  <div class="nav-links">
+    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+    <a href="{% url 'run_list' %}" {% if 'run' in request.resolver_match.url_name %}class="active"{% endif %}>ejecucciones</a>
+    <a href="{% url 'transaction_list' %}" {% if request.resolver_match.url_name == 'transaction_list' %}class="active"{% endif %}>Transacciones</a>
+    <a href="{% url 'error_list' %}" {% if request.resolver_match.url_name == 'error_list' %}class="active"{% endif %}>Errores</a>
+    <a href="{% url 'upload_json' %}" class="nav-upload" {% if request.resolver_match.url_name == 'upload_json' %}style="opacity:.85"{% endif %}>+ Importar JSON</a>
+  </div>
+</nav>
+<div class="container">
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>

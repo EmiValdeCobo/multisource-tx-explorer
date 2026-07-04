@@ -1,0 +1,91 @@
+{% extends "transactions/base.html" %}
+{% block title %}Transacciones – Normalizer{% endblock %}
+{% block content %}
+<h1>Transacciones normalizadas</h1>
+
+<div class="card">
+  <form class="filters" method="get">
+    <label>Estado
+      <select name="status">
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if val == selected_status %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Moneda
+      <select name="currency">
+        {% for val, label in currency_choices %}
+        <option value="{{ val }}" {% if val == selected_currency %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Monto mín
+      <input type="number" name="amount_min" value="{{ amount_min }}" step="0.01" placeholder="0.00" style="width:110px">
+    </label>
+    <label>Monto máx
+      <input type="number" name="amount_max" value="{{ amount_max }}" step="0.01" placeholder="9999.99" style="width:110px">
+    </label>
+    <label>Desde (fecha)
+      <input type="date" name="date_from" value="{{ date_from }}" style="width:140px">
+    </label>
+    <label>Hasta (fecha)
+      <input type="date" name="date_to" value="{{ date_to }}" style="width:140px">
+    </label>
+    <button type="submit" class="btn btn-primary" style="align-self:flex-end">Filtrar</button>
+    <a href="{% url 'transaction_list' %}" class="btn btn-secondary" style="align-self:flex-end">Limpiar</a>
+    <a href="{% url 'download_json' %}?{{ raw_params }}" class="btn btn-secondary" style="align-self:flex-end;margin-left:auto">↓ JSON</a>
+    <a href="{% url 'download_csv' %}?{{ raw_params }}" class="btn btn-secondary" style="align-self:flex-end">↓ CSV</a>
+  </form>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if page_obj.object_list %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Monto</th><th>Moneda</th>
+        <th>Timestamp</th><th>Estado</th><th>Fuente</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tx in page_obj %}
+      <tr>
+        <td class="mono">{{ tx.external_id }}</td>
+        <td class="mono" style="text-align:right">{{ tx.amount }}</td>
+        <td><span class="badge badge-v2">{{ tx.currency }}</span></td>
+        <td class="mono">{{ tx.timestamp|date:"Y-m-d H:i:s" }}Z</td>
+        <td>
+          {% if tx.status == "SUCCESS" %}<span class="badge badge-success">SUCCESS</span>
+          {% elif tx.status == "FAILED" %}<span class="badge badge-failed">FAILED</span>
+          {% else %}<span class="badge badge-pending">PENDING</span>{% endif %}
+        </td>
+        <td>
+          {% if tx.source == "variant_1" %}<span class="badge badge-v1">{{ tx.source }}</span>
+          {% elif tx.source == "variant_2" %}<span class="badge badge-v2">{{ tx.source }}</span>
+          {% else %}<span class="badge badge-v3">{{ tx.source }}</span>{% endif %}
+        </td>
+        <td><a href="{% url 'transaction_detail' tx.pk %}">Ver →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>Sin transacciones con los filtros seleccionados.</p></div>
+  {% endif %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?{{ raw_params }}&page=1">«</a>
+    <a href="?{{ raw_params }}&page={{ page_obj.previous_page_number }}">‹</a>
+  {% endif %}
+  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?{{ raw_params }}&page={{ page_obj.next_page_number }}">›</a>
+    <a href="?{{ raw_params }}&page={{ page_obj.paginator.num_pages }}">»</a>
+  {% endif %}
+  <span style="color:var(--muted);margin-left:8px;font-size:12px">{{ page_obj.paginator.count }} registros totales</span>
+</div>
+{% endif %}
+{% endblock %}
