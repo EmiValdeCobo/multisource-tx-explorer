@@ -73,7 +73,7 @@ class ValidationErrorRecord:
 
 @dataclass
 class ProcessingMetrics:
-    """Métricas consolidadas de una ejecuccion de normalización."""
+    """Métricas consolidadas de una corrida de normalización."""
 
     total_processed: int = 0
     total_valid: int = 0

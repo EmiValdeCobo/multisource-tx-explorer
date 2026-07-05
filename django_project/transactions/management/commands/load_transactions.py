@@ -15,8 +15,8 @@ sys.path.insert(0, str(settings.PROJECT_ROOT))
 
 from core.normalizer import TransactionNormalizer
 from core.schema import ProcessingMetrics
-from django_project.django_project.transactions.models import ProcessingRun
-from django_project.django_project.transactions.repository import DjangoTransactionRepository, DjangoErrorRepository
+from transactions.models import ProcessingRun
+from transactions.repository import DjangoTransactionRepository, DjangoErrorRepository
 
 
 class Command(BaseCommand):
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         err_repo.save_many(run, error_collector.errors)
 
         self.stdout.write(self.style.SUCCESS(
-            f"\n=== ejecuccion #{run.pk} completada ===\n"
+            f"\n=== Corrida #{run.pk} completada ===\n"
             f"  Total procesados : {metrics.total_processed}\n"
             f"  Válidos          : {metrics.total_valid}\n"
             f"  Inválidos        : {metrics.total_invalid}\n"

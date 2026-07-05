@@ -1,18 +1,18 @@
 """
 Vistas Django para la interfaz web interactiva de normalización de transacciones.
 
-  /                        → dashboard (métricas de la última ejecuccion)
+  /                        → dashboard (métricas de la última corrida)
   /upload/                 → subir un nuevo archivo JSON para procesar
-  /runs/                   → historial de todas las ejecuccions
-  /runs/<id>/              → detalle de una ejecuccion específica
+  /runs/                   → historial de todas las ejecución
+  /runs/<id>/              → detalle de una corrida específica
   /transactions/           → listado paginado con filtros
   /transactions/<id>/      → detalle de una transacción
   /errors/                 → listado de registros inválidos con motivo
   /download/json/          → descarga JSON de transacciones filtradas
   /download/csv/           → descarga CSV de transacciones filtradas
-  /runs/<id>/download/json → descarga JSON de una ejecuccion específica
-  /runs/<id>/download/csv  → descarga CSV de una ejecuccion específica
-  /runs/<id>/delete/       → eliminar una ejecuccion y sus datos
+  /runs/<id>/download/json → descarga JSON de una corrida específica
+  /runs/<id>/download/csv  → descarga CSV de una corrida específica
+  /runs/<id>/delete/       → eliminar una corrida y sus datos
 """
 from __future__ import annotations
 
@@ -32,13 +32,13 @@ sys.path.insert(0, str(settings.PROJECT_ROOT))
 
 from core.normalizer import TransactionNormalizer
 from core.logging_config import logger
-from django_project.django_project.transactions.models import (
+from transactions.models import (
     CanonicalStatusChoices,
     NormalizedTransaction,
     ProcessingRun,
     ValidationErrorLog,
 )
-from django_project.django_project.transactions.repository import DjangoTransactionRepository, DjangoErrorRepository
+from transactions.repository import DjangoTransactionRepository, DjangoErrorRepository
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -94,7 +94,7 @@ def _run_pipeline(raw_records: list[dict], source_label: str) -> ProcessingRun:
     tx_repo.save_many(run, valid_txs)
     err_repo.save_many(run, error_collector.errors)
 
-    logger.info("ejecuccion #%s creada: %s válidas, %s inválidas", run.pk, metrics.total_valid, metrics.total_invalid)
+    logger.info("Corrida #%s creada: %s válidas, %s inválidas", run.pk, metrics.total_valid, metrics.total_invalid)
     return run
 
 
@@ -136,7 +136,7 @@ def dashboard(request):
 def upload_json(request):
     """
     GET  → formulario de subida con drag-and-drop y previsualización.
-    POST → valida el archivo, ejecuta el pipeline y redirige al detalle de la ejecuccion.
+    POST → valida el archivo, ejecuta el pipeline y redirige al detalle de la corrida.
     """
     if request.method == "GET":
         recent_runs = ProcessingRun.objects.all()[:5]
@@ -187,7 +187,7 @@ def upload_json(request):
 
     messages.success(
         request,
-        f"✓ ejecuccion #{run.pk} completada — {run.total_valid} válidas, {run.total_invalid} inválidas."
+        f"✓ Corrida #{run.pk} completada — {run.total_valid} válidas, {run.total_invalid} inválidas."
     )
     return redirect("run_detail", pk=run.pk)
 
@@ -225,12 +225,12 @@ def run_delete(request, pk: int):
     run = get_object_or_404(ProcessingRun, pk=pk)
     run_id = run.pk
     run.delete()
-    messages.success(request, f"ejecuccion #{run_id} eliminada correctamente.")
+    messages.success(request, f"Corrida #{run_id} eliminada correctamente.")
     return redirect("run_list")
 
 
 # ---------------------------------------------------------------------------
-# Transaction list (todas las ejecuccions, con filtros)
+# Transaction list (todas las ejecución, con filtros)
 # ---------------------------------------------------------------------------
 
 @require_GET
@@ -238,7 +238,7 @@ def transaction_list(request):
     repo = DjangoTransactionRepository()
     filters = _build_filters(request)
 
-    # Filtro adicional por ejecuccion
+    # Filtro adicional por corrida
     run_id = request.GET.get("run")
     qs = repo.list(filters if filters else None)
     if run_id:
@@ -307,7 +307,7 @@ def error_list(request):
 
 
 # ---------------------------------------------------------------------------
-# Download: global (con filtros) o por ejecuccion específica
+# Download: global (con filtros) o por corrida específica
 # ---------------------------------------------------------------------------
 
 @require_GET

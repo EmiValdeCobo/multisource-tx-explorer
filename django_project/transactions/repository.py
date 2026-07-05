@@ -13,7 +13,7 @@ from datetime import datetime, timezone as dt_timezone
 from django.db.models import QuerySet
 
 from core.schema import CanonicalTransaction, ValidationErrorRecord
-from django_project.django_project.transactions.models import NormalizedTransaction, ProcessingRun, ValidationErrorLog
+from transactions.models import NormalizedTransaction, ProcessingRun, ValidationErrorLog
 
 
 class DjangoTransactionRepository:

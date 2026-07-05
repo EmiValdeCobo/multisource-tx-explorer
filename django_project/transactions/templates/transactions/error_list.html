@@ -1,45 +1,60 @@
 {% extends "transactions/base.html" %}
-{% block title %}Errores de validación – Normalizer{% endblock %}
+{% block title %}Errores de validación — TX Normalizer{% endblock %}
 {% block content %}
-<h1>Registros inválidos</h1>
+<div class="page">
 
-<div class="card">
-  <form class="filters" method="get">
-    <label>ejecuccion
-      <select name="run">
-        <option value="">Todas</option>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Registros inválidos</h1>
+    <p class="page-subtitle">Errores capturados con contexto completo · {{ page_obj.paginator.count }} total</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+  <form class="form-row" method="get">
+    <div class="form-group">
+      <label class="form-label">Corrida</label>
+      <select name="run" class="form-select">
+        <option value="">Todas las ejecución</option>
         {% for run in runs %}
-        <option value="{{ run.pk }}" {% if selected_run == run.pk|stringformat:"s" %}selected{% endif %}>#{{ run.pk }} – {{ run.created_at|date:"Y-m-d H:i" }}</option>
+        <option value="{{ run.pk }}" {% if selected_run == run.pk|stringformat:"s" %}selected{% endif %}>#{{ run.pk }} — {{ run.source_label|truncatechars:22 }}</option>
         {% endfor %}
       </select>
-    </label>
-    <label>Tipo de error
-      <select name="error_type">
-        <option value="">Todos</option>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de error</label>
+      <select name="error_type" class="form-select">
+        <option value="">Todos los tipos</option>
         {% for et in error_types %}
         <option value="{{ et }}" {% if et == selected_error_type %}selected{% endif %}>{{ et }}</option>
         {% endfor %}
       </select>
-    </label>
-    <button type="submit" class="btn btn-primary" style="align-self:flex-end">Filtrar</button>
-    <a href="{% url 'error_list' %}" class="btn btn-secondary" style="align-self:flex-end">Limpiar</a>
+    </div>
+    <div style="display:flex;gap:8px;align-self:flex-end">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <a href="{% url 'error_list' %}" class="btn btn-secondary">Limpiar</a>
+    </div>
   </form>
 </div>
 
 {% if page_obj.object_list %}
 {% for err in page_obj %}
-<div class="card" style="margin-bottom:14px">
-  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+<div class="error-card">
+  <div class="error-header">
     <span class="badge badge-failed">{{ err.error_type }}</span>
-    <span class="pill">Campo: <strong>{{ err.field|default:"—" }}</strong></span>
-    <span class="pill">Valor: <code>{{ err.value|default:"—" }}</code></span>
-    <span class="pill">Fuente: {{ err.source }}</span>
-    <span class="pill" style="margin-left:auto;color:var(--muted)">ejecuccion #{{ err.run.pk }} · {{ err.created_at|date:"Y-m-d H:i:s" }}</span>
+    <span class="pill">campo: <strong>{{ err.field|default:"—" }}</strong></span>
+    <span class="pill">valor: <strong style="font-family:var(--mono)">{{ err.value|default:"null"|truncatechars:28 }}</strong></span>
+    <span class="pill">fuente: <strong>{{ err.source }}</strong></span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3);flex-shrink:0">
+      Corrida <a href="{% url 'run_detail' err.run.pk %}" style="color:var(--text2)">#{{ err.run.pk }}</a>
+      · {{ err.created_at|date:"d/m H:i" }}
+    </span>
   </div>
   <div class="error-reason">{{ err.reason }}</div>
-  <details style="margin-top:12px">
-    <summary style="cursor:pointer;color:var(--muted);font-size:12px;user-select:none">Ver registro crudo</summary>
-    <pre style="margin-top:10px">{{ err.raw_record }}</pre>
+  <details class="error-raw">
+    <summary>Ver registro crudo original</summary>
+    <pre>{{ err.raw_record }}</pre>
   </details>
 </div>
 {% endfor %}
@@ -47,21 +62,24 @@
 {% if page_obj.paginator.num_pages > 1 %}
 <div class="pagination">
   {% if page_obj.has_previous %}
-    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page=1">«</a>
-    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.previous_page_number }}">‹</a>
-  {% endif %}
-  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.previous_page_number }}" class="page-btn">‹</a>
+  {% else %}<span class="page-btn disabled">‹</span>{% endif %}
+  <span class="page-btn active">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}
-    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.next_page_number }}">›</a>
-    <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.paginator.num_pages }}">»</a>
-  {% endif %}
-  <span style="color:var(--muted);margin-left:8px;font-size:12px">{{ page_obj.paginator.count }} errores totales</span>
+  <a href="?run={{ selected_run }}&error_type={{ selected_error_type }}&page={{ page_obj.next_page_number }}" class="page-btn">›</a>
+  {% else %}<span class="page-btn disabled">›</span>{% endif %}
+  <span class="page-info">{{ page_obj.paginator.count }} errores</span>
 </div>
 {% endif %}
 
 {% else %}
-<div class="card empty">
-  <p>✓ Sin errores con los filtros seleccionados.</p>
+<div class="empty">
+  <div class="empty-icon" style="color:var(--green)">✓</div>
+  <div class="empty-title" style="color:var(--green)">Sin errores</div>
+  <div class="empty-body">No hay registros inválidos con los filtros seleccionados.</div>
+  <a href="{% url 'error_list' %}" class="btn btn-secondary">Limpiar filtros</a>
 </div>
 {% endif %}
+
+</div>
 {% endblock %}

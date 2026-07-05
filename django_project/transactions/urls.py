@@ -1,5 +1,5 @@
 from django.urls import path
-from django_project.django_project.transactions import views
+from transactions import views
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),

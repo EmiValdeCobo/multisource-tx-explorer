@@ -78,7 +78,8 @@ transaction_normalizer/
 │   └── transactions.json          # 10 registros de las 3 variantes (válidos e inválidos)
 │
 ├── requirements.txt
-└── README.md
+├── README.md
+└── TECHNICAL_DOCS.md
 ```
 
 ---
@@ -140,7 +141,7 @@ print(metrics.to_dict())
 
 | Ruta | Descripción |
 |---|---|
-| `/` | Dashboard con métricas de la última ejecuccion |
+| `/` | Dashboard con métricas de la última corrida |
 | `/transactions/` | Listado paginado con filtros |
 | `/transactions/<id>/` | Detalle de una transacción |
 | `/errors/` | Registros inválidos con motivo de error |
@@ -335,7 +336,3 @@ Añadir entrada al dict `CURRENCY_SYMBOL_MAP` en `core/transformers.py`.
 ### Agregar nuevo mapeo de estado
 
 Añadir entrada al dict `STATUS_MAP` en `core/transformers.py`.
-
-
-## Aclaracion
-Este proyecto fue realizado con Django para probarlo, pero verdaderamente no era necesario, solo  fue curiosidad como era y como funcionaba

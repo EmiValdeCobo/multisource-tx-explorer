@@ -20,34 +20,33 @@ from core.exceptions import (
     FieldMappingError,
     StatusMappingError,
 )
+from core.config_loader import (
+    get_currency_symbol_map,
+    get_date_formats,
+    get_status_map,
+    get_supported_currencies,
+)
 from core.logging_config import logger
 from core.schema import CanonicalStatus, SourceVariant
 
 # ---------------------------------------------------------------------------
-# Tablas de mapeo (fácilmente extensibles sin tocar la lógica)
+# Tablas de mapeo — leídas de rules.json via config_loader (no hardcodeadas)
 # ---------------------------------------------------------------------------
 
-CURRENCY_SYMBOL_MAP = {
-    "€": "EUR",
-    "$": "USD",
-    "£": "GBP",
-    "¥": "JPY",
-}
+def _build_status_map() -> dict[str, CanonicalStatus]:
+    """Convierte el mapa de strings del config al enum CanonicalStatus."""
+    result: dict[str, CanonicalStatus] = {}
+    for k, v in get_status_map().items():
+        try:
+            result[k] = CanonicalStatus(v)
+        except ValueError:
+            logger.warning("rules.json: estado desconocido '%s' para clave '%s' — ignorado", v, k)
+    return result
 
-KNOWN_ISO_CURRENCIES = {"USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "MXN", "BRL"}
-
-STATUS_MAP = {
-    "completed": CanonicalStatus.SUCCESS,
-    "success": CanonicalStatus.SUCCESS,
-    "ok": CanonicalStatus.SUCCESS,
-    "succeeded": CanonicalStatus.SUCCESS,
-    "failed": CanonicalStatus.FAILED,
-    "failure": CanonicalStatus.FAILED,
-    "error": CanonicalStatus.FAILED,
-    "pending": CanonicalStatus.PENDING,
-    "processing": CanonicalStatus.PENDING,
-    "in_progress": CanonicalStatus.PENDING,
-}
+# Se evalúan al importar el módulo; actualizar con config_loader.reload_config()
+CURRENCY_SYMBOL_MAP: dict[str, str] = get_currency_symbol_map()
+KNOWN_ISO_CURRENCIES: set[str]      = get_supported_currencies()
+STATUS_MAP: dict[str, CanonicalStatus] = _build_status_map()
 
 
 # ---------------------------------------------------------------------------
@@ -169,11 +168,11 @@ class DateTransformStrategy(ABC):
 
 
 class StrptimeDateStrategy(DateTransformStrategy):
-    """Estrategia genérica basada en un formato strptime concreto."""
+    """Intenta cada formato de la lista (leída de rules.json) hasta el primero que funcione."""
 
-    def __init__(self, field_name: str, fmt: str):
+    def __init__(self, field_name: str, variant_key: str):
         self.field_name = field_name
-        self.fmt = fmt
+        self.variant_key = variant_key  # e.g. "variant_1", "variant_2"
 
     def transform(self, raw: dict, source: str) -> str:
         value = raw.get(self.field_name)
@@ -181,16 +180,19 @@ class StrptimeDateStrategy(DateTransformStrategy):
             raise FieldMappingError(
                 f"Campo '{self.field_name}' ausente", field=self.field_name, value=value, source=source
             )
-        try:
-            dt = datetime.strptime(str(value), self.fmt).replace(tzinfo=timezone.utc)
-        except ValueError as exc:
-            raise DateParsingError(
-                f"Formato de fecha inválido para '{value}' (esperado {self.fmt}): {exc}",
-                field=self.field_name,
-                value=value,
-                source=source,
-            ) from exc
-        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        formats = get_date_formats(self.variant_key)
+        for fmt in formats:
+            try:
+                dt = datetime.strptime(str(value), fmt).replace(tzinfo=timezone.utc)
+                return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                continue
+        raise DateParsingError(
+            f"Fecha '{value}' no coincide con ningún formato configurado para {self.variant_key}: {formats}",
+            field=self.field_name,
+            value=value,
+            source=source,
+        )
 
 
 class ISO8601DateStrategy(DateTransformStrategy):
@@ -305,7 +307,7 @@ class TransformerFactory:
                 id_strategy=IdTransformStrategy("id"),
                 amount_strategy=StringAmountStrategy(),
                 currency_strategy=DirectCodeCurrencyStrategy("currency"),
-                date_strategy=StrptimeDateStrategy("timestamp", "%Y-%m-%d %H:%M:%S"),
+                date_strategy=StrptimeDateStrategy("timestamp", "variant_1"),
                 status_strategy=StatusTransformStrategy("status"),
             )
         if variant == SourceVariant.VARIANT_2:
@@ -314,7 +316,7 @@ class TransformerFactory:
                 id_strategy=IdTransformStrategy("transaction_id"),
                 amount_strategy=CentsIntegerAmountStrategy(),
                 currency_strategy=DirectCodeCurrencyStrategy("currency_code"),
-                date_strategy=StrptimeDateStrategy("created_at", "%d/%m/%Y %H:%M"),
+                date_strategy=StrptimeDateStrategy("created_at", "variant_2"),
                 status_strategy=StatusTransformStrategy("state"),
             )
         if variant == SourceVariant.VARIANT_3:

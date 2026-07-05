@@ -1,10 +1,4 @@
-# Nota técnica — Transaction Normalizer
 
-**Autor:** Equipo de desarrollo  
-**Fecha:** Julio 2025  
-**Versión del sistema:** 1.0
-
----
 
 ## 1. Contexto del proyecto
 
@@ -42,7 +36,7 @@ La implementación fue asistida por IA (Claude, Anthropic) como herramienta de g
 
 **Decisión:** Cada importación crea un `ProcessingRun` en base de datos con sus métricas agregadas como `JSONField`. Las transacciones y errores tienen FK a su corrida.
 
-**Motivación:** La IA planteó originalmente un modelo plano de transacciones sin agrupación. Se añadió `ProcessingRun` para habilitar: historial de corridas, comparación entre importaciones, descarga por corrida individual y borrado granular sin afectar otras corridas. El `JSONField` para métricas evita joins al renderizar el dashboard.
+**Motivación:** La IA planteó originalmente un modelo plano de transacciones sin agrupación. Se añadió `ProcessingRun` para habilitar: historial de ejecución, comparación entre importaciones, descarga por corrida individual y borrado granular sin afectar otras ejecución. El `JSONField` para métricas evita joins al renderizar el dashboard.
 
 ---
 

@@ -1,0 +1,90 @@
+{
+  "_doc": "Archivo de reglas y configuración del pipeline de normalización. Editar este archivo y reiniciar el servidor es suficiente para que los cambios tomen efecto. No se requiere modificar código fuente.",
+
+  "status_mappings": {
+    "_doc": "Clave: valor crudo en minúscula. Valor: SUCCESS | FAILED | PENDING",
+    "completed":   "SUCCESS",
+    "success":     "SUCCESS",
+    "ok":          "SUCCESS",
+    "succeeded":   "SUCCESS",
+    "approved":    "SUCCESS",
+    "accepted":    "SUCCESS",
+    "done":        "SUCCESS",
+
+    "failed":      "FAILED",
+    "failure":     "FAILED",
+    "error":       "FAILED",
+    "rejected":    "FAILED",
+    "declined":    "FAILED",
+    "cancelled":   "FAILED",
+    "canceled":    "FAILED",
+
+    "pending":     "PENDING",
+    "processing":  "PENDING",
+    "in_progress": "PENDING",
+    "queued":      "PENDING",
+    "waiting":     "PENDING",
+    "initiated":   "PENDING"
+  },
+
+  "currencies": {
+    "_doc": "supported_codes: códigos ISO 4217 aceptados. symbol_map: símbolo → ISO (Variante 3).",
+    "supported_codes": [
+      "USD", "EUR", "GBP", "JPY", "CHF",
+      "CAD", "AUD", "MXN", "BRL", "CNY",
+      "INR", "KRW", "SGD", "HKD", "NOK",
+      "SEK", "DKK", "NZD", "ZAR", "ARS"
+    ],
+    "symbol_map": {
+      "€":  "EUR",
+      "$":  "USD",
+      "£":  "GBP",
+      "¥":  "JPY",
+      "₩":  "KRW",
+      "₹":  "INR",
+      "R$": "BRL",
+      "C$": "CAD",
+      "A$": "AUD"
+    }
+  },
+
+  "date_formats": {
+    "_doc": "Formatos strptime por variante. El orden importa: se intentan en secuencia hasta el primero que funcione.",
+    "variant_1": {
+      "field": "timestamp",
+      "formats": [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y/%m/%d %H:%M"
+      ]
+    },
+    "variant_2": {
+      "field": "created_at",
+      "formats": [
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H:%M:%S",
+        "%d-%m-%Y %H:%M",
+        "%m/%d/%Y %H:%M"
+      ]
+    },
+    "variant_3": {
+      "field": "date",
+      "strategy": "iso8601",
+      "_doc": "Usa datetime.fromisoformat(); no requiere formato explícito."
+    }
+  },
+
+  "validation_rules": {
+    "_doc": "Restricciones de negocio aplicadas post-transformación.",
+    "amount": {
+      "allow_zero":     false,
+      "allow_negative": false,
+      "max_value":      9999999.99
+    },
+    "upload": {
+      "max_file_size_mb":   10,
+      "allowed_extensions": [".json"]
+    }
+  }
+}

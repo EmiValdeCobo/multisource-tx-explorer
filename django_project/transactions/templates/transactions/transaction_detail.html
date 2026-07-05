@@ -1,36 +1,85 @@
 {% extends "transactions/base.html" %}
-{% block title %}TX {{ tx.external_id }} – Normalizer{% endblock %}
+{% block title %}TX {{ tx.external_id }} — TX Normalizer{% endblock %}
 {% block content %}
+<div class="page-sm">
+
 <div class="breadcrumb">
-  <a href="{% url 'transaction_list' %}">← Transacciones</a>
-</div>
-<h1>Transacción: <span class="mono">{{ tx.external_id }}</span></h1>
-
-<div class="card">
-  <table style="max-width:600px">
-    <tr><th>Campo canónico</th><th>Valor</th></tr>
-    <tr><td><span class="mono">id</span></td><td class="mono">{{ tx.external_id }}</td></tr>
-    <tr><td><span class="mono">amount</span></td><td class="mono">{{ tx.amount }}</td></tr>
-    <tr><td><span class="mono">currency</span></td><td><span class="badge badge-v2">{{ tx.currency }}</span></td></tr>
-    <tr><td><span class="mono">timestamp</span></td><td class="mono">{{ tx.timestamp|date:"Y-m-d H:i:s" }}Z</td></tr>
-    <tr><td><span class="mono">status</span></td>
-        <td>
-          {% if tx.status == "SUCCESS" %}<span class="badge badge-success">SUCCESS</span>
-          {% elif tx.status == "FAILED" %}<span class="badge badge-failed">FAILED</span>
-          {% else %}<span class="badge badge-pending">PENDING</span>{% endif %}
-        </td>
-    </tr>
-    <tr><td><span class="mono">source</span></td>
-        <td>
-          {% if tx.source == "variant_1" %}<span class="badge badge-v1">{{ tx.source }}</span>
-          {% elif tx.source == "variant_2" %}<span class="badge badge-v2">{{ tx.source }}</span>
-          {% else %}<span class="badge badge-v3">{{ tx.source }}</span>{% endif %}
-        </td>
-    </tr>
-    <tr><td>ejecuccion #</td><td class="mono">{{ tx.run.pk }}</td></tr>
-    <tr><td>ejecuccion fecha</td><td class="mono">{{ tx.run.created_at|date:"Y-m-d H:i:s" }}Z</td></tr>
-  </table>
+  <a href="{% url 'transaction_list' %}">Transacciones</a>
+  <span class="breadcrumb-sep">›</span>
+  <span>{{ tx.external_id }}</span>
 </div>
 
-<a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Volver al listado</a>
+<div class="page-header">
+  <div>
+    <h1 class="page-title" style="font-family:var(--mono);font-size:20px">{{ tx.external_id }}</h1>
+    <p class="page-subtitle">
+      Corrida <a href="{% url 'run_detail' tx.run.pk %}">#{{ tx.run.pk }}</a>
+      · {{ tx.run.created_at|date:"d M Y, H:i" }} UTC
+    </p>
+  </div>
+  <div class="page-actions">
+    {% if tx.status == "SUCCESS" %}<span class="badge badge-success" style="font-size:13px;padding:6px 14px">SUCCESS</span>
+    {% elif tx.status == "FAILED" %}<span class="badge badge-failed" style="font-size:13px;padding:6px 14px">FAILED</span>
+    {% else %}<span class="badge badge-pending" style="font-size:13px;padding:6px 14px">PENDING</span>{% endif %}
+  </div>
+</div>
+
+<!-- Main detail card -->
+<div class="card card-lg" style="margin-bottom:16px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">ID</div>
+      <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text)">{{ tx.external_id }}</div>
+    </div>
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Monto</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--teal)">
+        {{ tx.currency }} {{ tx.amount }}
+      </div>
+    </div>
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Moneda</div>
+      <span class="badge badge-currency" style="font-size:13px;padding:4px 12px">{{ tx.currency }}</span>
+    </div>
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Estado canónico</div>
+      {% if tx.status == "SUCCESS" %}<span class="badge badge-success" style="font-size:13px">SUCCESS</span>
+      {% elif tx.status == "FAILED" %}<span class="badge badge-failed" style="font-size:13px">FAILED</span>
+      {% else %}<span class="badge badge-pending" style="font-size:13px">PENDING</span>{% endif %}
+    </div>
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Timestamp (UTC)</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text)">{{ tx.timestamp|date:"Y-m-d H:i:s" }}Z</div>
+    </div>
+
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Fuente / Variante</div>
+      <span class="badge {% if tx.source == 'variant_1' %}badge-v1{% elif tx.source == 'variant_2' %}badge-v2{% else %}badge-v3{% endif %}">{{ tx.source }}</span>
+    </div>
+
+    <div style="padding:16px 20px;border-right:1px solid var(--border)">
+      <div class="stat-label" style="margin-bottom:6px">Corrida de importación</div>
+      <a href="{% url 'run_detail' tx.run.pk %}" style="font-family:var(--mono);color:var(--accent)">#{{ tx.run.pk }}</a>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono)">{{ tx.run.source_label|truncatechars:36 }}</div>
+    </div>
+
+    <div style="padding:16px 20px">
+      <div class="stat-label" style="margin-bottom:6px">DB id interno</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text3)">{{ tx.pk }}</div>
+    </div>
+
+  </div>
+</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+  <a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Volver al listado</a>
+  <a href="{% url 'run_detail' tx.run.pk %}" class="btn btn-secondary">Ver corrida #{{ tx.run.pk }}</a>
+</div>
+
+</div>
 {% endblock %}

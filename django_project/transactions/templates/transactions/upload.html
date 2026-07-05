@@ -1,240 +1,183 @@
 {% extends "transactions/base.html" %}
-{% block title %}Importar JSON – Normalizer{% endblock %}
+{% block title %}Importar JSON — TX Normalizer{% endblock %}
 {% block content %}
+<div class="page-sm">
 
-<h1>Importar archivo de transacciones</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Importar transacciones</h1>
+    <p class="page-subtitle">Sube un archivo <code>.json</code> con registros heterogéneos — el sistema detecta la variante de cada uno automáticamente.</p>
+  </div>
+</div>
 
-{% if messages %}
-  {% for msg in messages %}
-    <div class="alert alert-{{ msg.tags }}" style="
-      padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:13px;
-      background:{% if 'error' in msg.tags %}rgba(255,77,109,.12){% else %}rgba(6,214,160,.12){% endif %};
-      border:1px solid {% if 'error' in msg.tags %}rgba(255,77,109,.4){% else %}rgba(6,214,160,.4){% endif %};
-      color:{% if 'error' in msg.tags %}var(--danger){% else %}var(--success){% endif %};">
-      {{ msg }}
-    </div>
-  {% endfor %}
-{% endif %}
+<div class="grid-2" style="align-items:start;gap:20px">
 
-<div style="display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start">
+  <!-- Upload form -->
+  <div>
+    <div class="card card-lg" style="margin-bottom:16px">
+      <form method="post" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
 
-  <!-- Upload card -->
-  <div class="card">
-    <h2 style="margin-bottom:6px">Subir archivo JSON</h2>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:20px">
-      El archivo debe ser una lista JSON <code>[ ]</code> con registros heterogéneos.
-      Máximo 10 MB. La normalización ocurre al instante tras subir.
-    </p>
-
-    <form method="post" enctype="multipart/form-data" id="upload-form">
-      {% csrf_token %}
-
-      <!-- Drop zone -->
-      <div id="drop-zone" onclick="document.getElementById('json_file').click()" style="
-        border:2px dashed var(--border); border-radius:10px; padding:50px 24px;
-        text-align:center; cursor:pointer; transition:.2s; margin-bottom:18px;
-        background:var(--surface2);">
-        <div id="dz-icon" style="font-size:38px;margin-bottom:10px">📂</div>
-        <div id="dz-label" style="font-size:14px;color:var(--muted)">
-          Arrastra tu <strong style="color:var(--text)">.json</strong> aquí
-          o <span style="color:var(--accent)">haz clic para seleccionar</span>
+        <!-- Drop zone -->
+        <div id="dropZone" onclick="document.getElementById('fileInput').click()" style="
+          border:2px dashed var(--border2);border-radius:var(--radius);padding:44px 24px;
+          text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);
+          margin-bottom:20px;position:relative;overflow:hidden;
+        ">
+          <div id="dzState" style="pointer-events:none">
+            <div style="font-size:40px;margin-bottom:12px;transition:transform .2s" id="dzIcon">📂</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px">Arrastra tu archivo aquí</div>
+            <div style="font-size:13px;color:var(--text3)">o <span style="color:var(--accent);font-weight:600">haz clic para seleccionar</span></div>
+            <div style="margin-top:12px;font-size:11px;color:var(--text3)">Solo archivos <code>.json</code> · Máximo 10 MB</div>
+          </div>
+          <input type="file" name="json_file" id="fileInput" accept=".json" style="display:none" required>
         </div>
-        <input type="file" name="json_file" id="json_file" accept=".json"
-               style="display:none" required>
-      </div>
 
-      <!-- Preview box (hidden until file chosen) -->
-      <div id="preview-box" style="display:none;margin-bottom:18px">
-        <div class="card" style="padding:14px 16px;margin-bottom:0">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <span id="preview-icon" style="font-size:24px">📄</span>
-            <div style="flex:1;min-width:0">
-              <div id="preview-name" style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-              <div id="preview-size" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+        <!-- Preview box -->
+        <div id="previewBox" style="display:none;margin-bottom:20px">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:8px;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📄</div>
+              <div style="flex:1;min-width:0">
+                <div id="prevName" style="font-weight:600;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                <div id="prevSize" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+              </div>
+              <div id="prevCount" style="text-align:right;flex-shrink:0"></div>
             </div>
-            <div id="preview-count" style="text-align:right;font-size:13px"></div>
-          </div>
-          <div id="preview-error" style="color:var(--danger);font-size:12px;margin-top:10px;display:none"></div>
-          <div id="preview-sample" style="margin-top:12px;display:none">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Primeros 3 registros detectados</div>
-            <pre id="preview-pre" style="max-height:180px;overflow-y:auto;font-size:11px"></pre>
+            <div id="prevError" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--rose-dim);border:1px solid rgba(244,63,94,.25);color:var(--rose);font-size:12px"></div>
+            <div id="prevSample" style="display:none;margin-top:14px">
+              <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Previsualización — primeros 2 registros</div>
+              <pre id="prevPre" style="max-height:160px;overflow-y:auto;font-size:11px"></pre>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Label optativo -->
-      <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px">
-        Etiqueta de la ejecuccion (opcional)
-        <input type="text" name="source_label" id="source_label"
-               placeholder="ej. batch-marzo-2025, sistema-pagos-v2..."
-               style="background:var(--surface2);border:1px solid var(--border);color:var(--text);
-                      padding:8px 12px;border-radius:6px;font-size:13px;outline:none;max-width:100%">
-      </label>
+        <!-- Label field -->
+        <div class="form-group" style="margin-bottom:16px;width:100%">
+          <label class="form-label">Etiqueta de corrida (opcional)</label>
+          <input type="text" name="source_label" id="sourceLabel" class="form-input"
+                 placeholder="ej. batch-marzo-2025, pagos-tienda-v2…">
+        </div>
 
-      <button type="submit" id="submit-btn" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" disabled>
-        <span id="btn-label">Selecciona un archivo primero</span>
-      </button>
-    </form>
+        <!-- Submit -->
+        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" style="width:100%;justify-content:center" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 5 5 12"/></svg>
+          <span id="btnText">Selecciona un archivo primero</span>
+        </button>
+      </form>
+    </div>
   </div>
 
-  <!-- Side panel: info + formato -->
+  <!-- Sidebar info -->
   <div>
-    <div class="card" style="margin-bottom:16px">
-      <h2>Variantes soportadas</h2>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:14px">
-        El sistema detecta automáticamente la estructura de cada registro.
-      </p>
+    <!-- Variantes -->
+    <div class="card" style="margin-bottom:14px">
+      <h2 style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:16px">Variantes soportadas</h2>
 
-      <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span class="badge badge-v1">Variante 1</span>
-        </div>
-        <pre style="font-size:11px;margin:0">{ "id", "amount"(str),
-  "currency", "timestamp",
-  "status" }</pre>
+      <div style="margin-bottom:16px">
+        <span class="badge badge-v1" style="margin-bottom:8px">Variante 1</span>
+        <pre style="font-size:11px;margin:0">{
+  "id": "tx_001",
+  "amount": "100.50",
+  "currency": "USD",
+  "timestamp": "2025-03-10 14:22:00",
+  "status": "completed"
+}</pre>
       </div>
-
-      <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span class="badge badge-v2">Variante 2</span>
-        </div>
-        <pre style="font-size:11px;margin:0">{ "transaction_id", "total"(cents),
-  "currency_code", "created_at",
-  "state" }</pre>
+      <div style="margin-bottom:16px">
+        <span class="badge badge-v2" style="margin-bottom:8px">Variante 2</span>
+        <pre style="font-size:11px;margin:0">{
+  "transaction_id": 204,
+  "total": 10050,
+  "currency_code": "usd",
+  "created_at": "10/03/2025 14:22",
+  "state": "OK"
+}</pre>
       </div>
-
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span class="badge badge-v3">Variante 3</span>
-        </div>
-        <pre style="font-size:11px;margin:0">{ "ref", "amount"("€99,99"),
-  "date"(ISO-8601), "result" }</pre>
+        <span class="badge badge-v3" style="margin-bottom:8px">Variante 3</span>
+        <pre style="font-size:11px;margin:0">{
+  "ref": "A-77",
+  "amount": "€99,99",
+  "date": "2025-03-10T14:22:00Z",
+  "result": "success"
+}</pre>
       </div>
     </div>
 
+    <!-- Recent runs -->
     <div class="card">
-      <h2>ejecuccions recientes</h2>
-      {% for run in recent_runs %}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <a href="{% url 'run_detail' run.pk %}" style="font-size:13px;font-weight:600">ejecuccion #{{ run.pk }}</a>
-          <div style="font-size:11px;color:var(--muted)">{{ run.source_label }}</div>
-        </div>
-        <div style="text-align:right;font-size:12px">
-          <span style="color:var(--success)">{{ run.total_valid }}✓</span>
-          <span style="color:var(--danger);margin-left:6px">{{ run.total_invalid }}✗</span>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="font-size:14px;font-weight:600;color:var(--text2);margin:0">ejecución recientes</h2>
+        <a href="{% url 'run_list' %}" class="btn btn-ghost btn-sm">Ver todas →</a>
       </div>
+      {% for run in recent_runs %}
+      <a href="{% url 'run_detail' run.pk %}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);color:var(--text2);transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:500;color:inherit">#{{ run.pk }} <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">{{ run.source_label|truncatechars:20 }}</span></div>
+          <div style="font-size:11px;color:var(--text3)">{{ run.created_at|date:"d/m H:i" }}</div>
+        </div>
+        <div style="font-size:12px;flex-shrink:0;margin-left:8px">
+          <span style="color:var(--green)">{{ run.total_valid }}✓</span>
+          <span style="color:var(--rose);margin-left:6px">{{ run.total_invalid }}✗</span>
+        </div>
+      </a>
       {% empty %}
-      <p style="color:var(--muted);font-size:13px">Sin ejecuccions previas.</p>
+      <div class="empty" style="padding:24px"><div class="empty-body">Sin ejecución previas</div></div>
       {% endfor %}
-      {% if recent_runs %}
-      <a href="{% url 'run_list' %}" style="display:block;text-align:center;margin-top:12px;font-size:12px">Ver historial completo →</a>
-      {% endif %}
     </div>
   </div>
 
 </div>
+</div>
 
 <script>
-const dropZone  = document.getElementById("drop-zone");
-const fileInput = document.getElementById("json_file");
-const preview   = document.getElementById("preview-box");
-const previewName  = document.getElementById("preview-name");
-const previewSize  = document.getElementById("preview-size");
-const previewCount = document.getElementById("preview-count");
-const previewErr   = document.getElementById("preview-error");
-const previewSample= document.getElementById("preview-sample");
-const previewPre   = document.getElementById("preview-pre");
-const submitBtn    = document.getElementById("submit-btn");
-const btnLabel     = document.getElementById("btn-label");
-const dzLabel      = document.getElementById("dz-label");
-const dzIcon       = document.getElementById("dz-icon");
-const sourceLbl    = document.getElementById("source_label");
+const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+const prevBox=document.getElementById('previewBox'),prevName=document.getElementById('prevName');
+const prevSize=document.getElementById('prevSize'),prevCount=document.getElementById('prevCount');
+const prevErr=document.getElementById('prevError'),prevSample=document.getElementById('prevSample');
+const prevPre=document.getElementById('prevPre'),submitBtn=document.getElementById('submitBtn');
+const btnText=document.getElementById('btnText'),sourceLabel=document.getElementById('sourceLabel');
 
-function fmtBytes(b) {
-  if (b < 1024) return b + " B";
-  if (b < 1024*1024) return (b/1024).toFixed(1) + " KB";
-  return (b/1024/1024).toFixed(2) + " MB";
-}
+function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(2)+' MB';}
 
-function showPreview(file) {
-  preview.style.display = "block";
-  previewName.textContent = file.name;
-  previewSize.textContent = fmtBytes(file.size);
-  previewErr.style.display = "none";
-  previewSample.style.display = "none";
-  previewCount.innerHTML = "";
-  submitBtn.disabled = true;
-  btnLabel.textContent = "Validando…";
+function handle(file){
+  prevBox.style.display='block';
+  prevName.textContent=file.name;
+  prevSize.textContent=fmt(file.size);
+  prevErr.style.display='none'; prevSample.style.display='none';
+  prevCount.innerHTML=''; submitBtn.disabled=true; btnText.textContent='Validando…';
 
-  if (file.size > 10 * 1024 * 1024) {
-    previewErr.textContent = "El archivo supera el límite de 10 MB.";
-    previewErr.style.display = "block";
-    btnLabel.textContent = "Archivo demasiado grande";
-    return;
+  if(file.size>10485760){
+    showErr('El archivo supera el límite de 10 MB.');return;
   }
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    let parsed;
-    try {
-      parsed = JSON.parse(e.target.result);
-    } catch(err) {
-      previewErr.textContent = "JSON inválido: " + err.message;
-      previewErr.style.display = "block";
-      btnLabel.textContent = "JSON inválido";
-      return;
-    }
-    if (!Array.isArray(parsed)) {
-      previewErr.textContent = "El JSON debe ser una lista [ ] en el nivel raíz.";
-      previewErr.style.display = "block";
-      btnLabel.textContent = "Formato incorrecto";
-      return;
-    }
-    if (parsed.length === 0) {
-      previewErr.textContent = "La lista está vacía.";
-      previewErr.style.display = "block";
-      btnLabel.textContent = "Archivo vacío";
-      return;
-    }
-    // All good
-    previewCount.innerHTML = `<span style="font-size:22px;font-weight:700;color:var(--accent2)">${parsed.length}</span><br><span style="font-size:11px;color:var(--muted)">registros</span>`;
-    const sample = parsed.slice(0, 3);
-    previewPre.textContent = JSON.stringify(sample, null, 2);
-    previewSample.style.display = "block";
-    submitBtn.disabled = false;
-    btnLabel.textContent = `⚡ Normalizar ${parsed.length} registro${parsed.length !== 1 ? "s" : ""}`;
-    // Auto-fill label if empty
-    if (!sourceLbl.value) sourceLbl.value = file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    let data;
+    try{data=JSON.parse(e.target.result);}
+    catch(ex){showErr('JSON inválido: '+ex.message);return;}
+    if(!Array.isArray(data)){showErr('El JSON debe ser una lista [ ] en el nivel raíz.');return;}
+    if(!data.length){showErr('La lista está vacía.');return;}
+    prevCount.innerHTML='<div style="text-align:right"><span style="font-size:22px;font-weight:700;color:var(--teal)">'+data.length+'</span><div style="font-size:11px;color:var(--text3)">registros</div></div>';
+    prevPre.textContent=JSON.stringify(data.slice(0,2),null,2);
+    prevSample.style.display='block';
+    submitBtn.disabled=false;
+    btnText.textContent='Normalizar '+data.length+' registro'+(data.length!==1?'s':'');
+    if(!sourceLabel.value)sourceLabel.value=file.name;
   };
   reader.readAsText(file);
 }
+function showErr(msg){prevErr.textContent=msg;prevErr.style.display='block';btnText.textContent='Archivo inválido';}
 
-fileInput.addEventListener("change", () => {
-  if (fileInput.files[0]) showPreview(fileInput.files[0]);
+fi.addEventListener('change',()=>{if(fi.files[0])handle(fi.files[0]);});
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.style.borderColor='var(--accent)';dz.style.background='rgba(99,102,241,.06)';}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.style.borderColor='var(--border2)';dz.style.background='var(--surface2)';}));
+dz.addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f){const dt=new DataTransfer();dt.items.add(f);fi.files=dt.files;handle(f);}
 });
-
-// Drag & drop
-["dragenter","dragover"].forEach(ev =>
-  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; })
-);
-["dragleave","drop"].forEach(ev =>
-  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.style.borderColor = "var(--border)"; })
-);
-dropZone.addEventListener("drop", e => {
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    const dt = new DataTransfer(); dt.items.add(file);
-    fileInput.files = dt.files;
-    showPreview(file);
-  }
-});
-
-// Spinner on submit
-document.getElementById("upload-form").addEventListener("submit", () => {
-  submitBtn.disabled = true;
-  btnLabel.textContent = "Procesando…";
+document.getElementById('uploadForm').addEventListener('submit',()=>{
+  submitBtn.disabled=true;btnText.textContent='Procesando…';
 });
 </script>
 {% endblock %}

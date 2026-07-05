@@ -4,8 +4,8 @@ Modelos Django que persisten el resultado del pipeline de normalización
 
 `NormalizedTransaction` refleja 1:1 el esquema canónico (`core.schema.CanonicalTransaction`).
 `ValidationErrorLog` refleja `core.schema.ValidationErrorRecord`.
-`ProcessingRun` agrupa una ejecuccion de importación y guarda sus métricas agregadas,
-lo que permite comparar ejecuccions a lo largo del tiempo desde el dashboard.
+`ProcessingRun` agrupa una corrida de importación y guarda sus métricas agregadas,
+lo que permite comparar ejecución a lo largo del tiempo desde el dashboard.
 """
 from django.db import models
 

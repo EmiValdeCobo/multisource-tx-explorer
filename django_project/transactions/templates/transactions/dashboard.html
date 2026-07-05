@@ -1,110 +1,169 @@
 {% extends "transactions/base.html" %}
-{% block title %}Dashboard – Normalizer{% endblock %}
+{% block title %}Dashboard — TX Normalizer{% endblock %}
 {% block content %}
-<h1>Dashboard</h1>
+<div class="page">
 
 {% if latest_run %}
-  <p style="color:var(--muted);font-size:12px;margin-bottom:20px;">
-    Última ejecuccion: <strong style="color:var(--text)">{{ latest_run.created_at|date:"Y-m-d H:i:s" }} UTC</strong>
-    — Fuente: <span class="mono">{{ latest_run.source_label }}</span>
-  </p>
 
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-label">Total procesados</div><div class="stat-value">{{ latest_run.total_processed }}</div></div>
-    <div class="stat"><div class="stat-label">Válidos</div><div class="stat-value accent">{{ latest_run.total_valid }}</div></div>
-    <div class="stat"><div class="stat-label">Inválidos</div><div class="stat-value danger">{{ latest_run.total_invalid }}</div></div>
-    <div class="stat"><div class="stat-label">SUCCESS</div><div class="stat-value" style="color:var(--success)">{{ latest_run.status_counts.SUCCESS|default:0 }}</div></div>
-    <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" style="color:var(--pending)">{{ latest_run.status_counts.PENDING|default:0 }}</div></div>
-    <div class="stat"><div class="stat-label">FAILED</div><div class="stat-value" style="color:var(--failed)">{{ latest_run.status_counts.FAILED|default:0 }}</div></div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">
+      Última corrida <strong style="color:var(--text)">#{{ latest_run.pk }}</strong>
+      · {{ latest_run.created_at|date:"d M Y, H:i" }} UTC
+      · <span style="font-family:var(--mono);font-size:12px">{{ latest_run.source_label }}</span>
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'upload_json' %}" class="btn btn-primary">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 5 5 12"/></svg>
+      Nueva importación
+    </a>
+    <a href="{% url 'run_list' %}" class="btn btn-secondary">Ver historial</a>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Total procesados</div>
+    <div class="stat-value stat--purple">{{ latest_run.total_processed }}</div>
+    <div class="stat-sub">en esta corrida</div>
+  </div>
+  <div class="stat stat--accent">
+    <div class="stat-label">Válidos</div>
+    <div class="stat-value">{{ latest_run.total_valid }}</div>
+    {% if latest_run.total_processed %}
+    <div class="progress"><div class="progress-bar progress-bar--success" style="width:{% widthratio latest_run.total_valid latest_run.total_processed 100 %}%"></div></div>
+    {% endif %}
+  </div>
+  <div class="stat stat--danger">
+    <div class="stat-label">Inválidos</div>
+    <div class="stat-value">{{ latest_run.total_invalid }}</div>
+    {% if latest_run.total_processed %}
+    <div class="progress"><div class="progress-bar progress-bar--danger" style="width:{% widthratio latest_run.total_invalid latest_run.total_processed 100 %}%"></div></div>
+    {% endif %}
+  </div>
+  <div class="stat stat--success">
+    <div class="stat-label">SUCCESS</div>
+    <div class="stat-value">{{ latest_run.status_counts.SUCCESS|default:0 }}</div>
+  </div>
+  <div class="stat stat--warn">
+    <div class="stat-label">PENDING</div>
+    <div class="stat-value">{{ latest_run.status_counts.PENDING|default:0 }}</div>
+  </div>
+  <div class="stat stat--danger">
+    <div class="stat-label">FAILED</div>
+    <div class="stat-value">{{ latest_run.status_counts.FAILED|default:0 }}</div>
+  </div>
+</div>
+
+<!-- Middle grid -->
+<div class="grid-2" style="margin-bottom:20px">
+
+  <!-- Currency totals -->
+  <div class="card">
+    <h2 style="font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text2)">Totales por moneda</h2>
+    {% if latest_run.currency_totals %}
+    {% for currency, total in latest_run.currency_totals.items %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--teal);font-family:var(--mono)">{{ currency }}</span>
+        <span style="font-size:13px;color:var(--text2)">{{ currency }}</span>
+      </div>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--text);font-size:15px">{{ total }}</span>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty" style="padding:30px"><div class="empty-body">Sin totales</div></div>
+    {% endif %}
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;">
-
-    <div class="card">
-      <h2>Totales por moneda</h2>
-      <table>
-        <thead><tr><th>Moneda</th><th style="text-align:right">Total</th></tr></thead>
-        <tbody>
-          {% for currency, total in latest_run.currency_totals.items %}
-          <tr>
-            <td><span class="badge badge-v2">{{ currency }}</span></td>
-            <td style="text-align:right;font-weight:700;font-family:monospace">{{ total }}</td>
-          </tr>
-          {% empty %}<tr><td colspan="2" class="empty">Sin datos</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Error breakdown -->
+  <div class="card">
+    <h2 style="font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text2)">Errores por tipo</h2>
+    {% if latest_run.error_type_counts %}
+    {% for etype, count in latest_run.error_type_counts.items %}
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-family:var(--mono);font-size:12px;color:var(--rose)">{{ etype }}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text)">{{ count }}</span>
+      </div>
+      {% if latest_run.total_invalid %}
+      <div class="progress"><div class="progress-bar progress-bar--danger" style="width:{% widthratio count latest_run.total_invalid 100 %}%"></div></div>
+      {% endif %}
     </div>
-
-    <div class="card">
-      <h2>Errores por tipo</h2>
-      <table>
-        <thead><tr><th>Tipo de error</th><th style="text-align:right">Ocurrencias</th></tr></thead>
-        <tbody>
-          {% for etype, count in latest_run.error_type_counts.items %}
-          <tr>
-            <td><span class="mono" style="color:var(--danger)">{{ etype }}</span></td>
-            <td style="text-align:right">{{ count }}</td>
-          </tr>
-          {% empty %}<tr><td colspan="2" style="color:var(--success);padding:14px">✓ Sin errores</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {% endfor %}
+    {% else %}
+    <div class="empty" style="padding:30px;color:var(--green)">
+      <div style="font-size:28px;margin-bottom:8px">✓</div>
+      <div>Sin errores de validación</div>
     </div>
-
-    <div class="card">
-      <h2>Transacciones por fuente</h2>
-      <table>
-        <thead><tr><th>Fuente</th><th style="text-align:right">Transacciones</th></tr></thead>
-        <tbody>
-          {% for src, count in latest_run.source_counts.items %}
-          <tr>
-            <td>
-              {% if src == "variant_1" %}<span class="badge badge-v1">{{ src }}</span>
-              {% elif src == "variant_2" %}<span class="badge badge-v2">{{ src }}</span>
-              {% else %}<span class="badge badge-v3">{{ src }}</span>{% endif %}
-            </td>
-            <td style="text-align:right">{{ count }}</td>
-          </tr>
-          {% empty %}<tr><td colspan="2" class="empty">Sin datos</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>ejecuccions recientes</h2>
-      <table>
-        <thead><tr><th>#</th><th>Fecha</th><th>Procesados</th><th>Válidos</th><th>Inválidos</th></tr></thead>
-        <tbody>
-          {% for run in runs %}
-          <tr>
-            <td class="mono">{{ run.pk }}</td>
-            <td class="mono">{{ run.created_at|date:"Y-m-d H:i" }}</td>
-            <td>{{ run.total_processed }}</td>
-            <td style="color:var(--success)">{{ run.total_valid }}</td>
-            <td style="color:{% if run.total_invalid %}var(--danger){% else %}var(--muted){% endif %}">{{ run.total_invalid }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
+    {% endif %}
   </div>
 
-  <div class="dl-row">
-    <a href="{% url 'transaction_list' %}" class="btn btn-primary">Ver transacciones →</a>
-    <a href="{% url 'error_list' %}" class="btn btn-danger">Ver errores →</a>
-    <a href="{% url 'download_json' %}" class="btn btn-secondary">↓ Descargar JSON</a>
-    <a href="{% url 'download_csv' %}" class="btn btn-secondary">↓ Descargar CSV</a>
+</div>
+
+<!-- Source breakdown + recent runs -->
+<div class="grid-2" style="margin-bottom:24px">
+
+  <div class="card">
+    <h2 style="font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text2)">Fuentes detectadas</h2>
+    {% for src, count in latest_run.source_counts.items %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span class="badge {% if src == 'variant_1' %}badge-v1{% elif src == 'variant_2' %}badge-v2{% else %}badge-v3{% endif %}">{{ src }}</span>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)">{{ count }}</span>
+    </div>
+    {% empty %}
+    <div class="empty" style="padding:24px"><div class="empty-body">Sin datos</div></div>
+    {% endfor %}
   </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-size:14px;font-weight:600;color:var(--text2);margin:0">ejecución recientes</h2>
+      <a href="{% url 'run_list' %}" class="btn btn-ghost btn-sm">Ver todas →</a>
+    </div>
+    {% for run in runs %}
+    <a href="{% url 'run_detail' run.pk %}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);color:var(--text2);transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:inherit">#{{ run.pk }} — <span style="font-family:var(--mono);font-size:11px">{{ run.source_label|truncatechars:24 }}</span></div>
+        <div style="font-size:11px;color:var(--text3)">{{ run.created_at|date:"d/m/Y H:i" }}</div>
+      </div>
+      <div style="text-align:right;font-size:12px">
+        <span style="color:var(--green);font-weight:600">{{ run.total_valid }}</span>
+        <span style="color:var(--text3);margin:0 4px">/</span>
+        <span style="color:var(--rose)">{{ run.total_invalid }}</span>
+      </div>
+    </a>
+    {% empty %}
+    <div class="empty" style="padding:24px"><div class="empty-body">Sin ejecución</div></div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Action row -->
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+  <a href="{% url 'transaction_list' %}" class="btn btn-primary">Ver transacciones →</a>
+  <a href="{% url 'error_list' %}" class="btn btn-danger">Ver errores</a>
+  <a href="{% url 'download_json' %}" class="btn btn-secondary">↓ JSON</a>
+  <a href="{% url 'download_csv' %}" class="btn btn-secondary">↓ CSV</a>
+</div>
 
 {% else %}
-  <div class="card empty">
-    <p style="font-size:18px;margin-bottom:10px">Sin datos cargados aún.</p>
-    <p>Ejecuta el management command para importar transacciones:</p>
-    <pre style="display:inline-block;margin-top:12px;text-align:left">cd django_project
-python manage.py load_transactions</pre>
-  </div>
+<!-- Empty state -->
+<div style="max-width:520px;margin:80px auto;text-align:center">
+  <div style="width:80px;height:80px;border-radius:20px;background:var(--surface);border:2px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px">📂</div>
+  <h1 class="page-title" style="margin-bottom:10px">Sin datos aún</h1>
+  <p style="color:var(--text2);margin-bottom:28px;font-size:14px;line-height:1.7">Importa tu primer archivo <code>.json</code> para comenzar. El sistema detectará automáticamente la estructura de cada registro.</p>
+  <a href="{% url 'upload_json' %}" class="btn btn-primary btn-lg">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 5 5 12"/></svg>
+    Importar primer archivo
+  </a>
+  <div style="margin-top:24px;font-size:12px;color:var(--text3)">O ejecuta: <code>python manage.py load_transactions</code></div>
+</div>
 {% endif %}
+
+</div>
 {% endblock %}
